@@ -38,6 +38,10 @@ header h1 {
   color: #ccc;
 }
 
+.edit-mode {
+  color: #ccc;
+}
+
 /* Form & Input */
 .form-input {
   width: 100%;
