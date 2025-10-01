@@ -4,7 +4,7 @@ const itemList = document.getElementById('item-list');
 const clearBtn = document.getElementById('clear');
 const itemFilter = document.getElementById('filter');
 const formBtn = itemForm.querySelector('button');
-let isEditMode = false;
+let itemBeingEdited = null;
 
 function displayItems() {
   const itemsFromStorage = getItemsFromStorage();
@@ -15,20 +15,17 @@ function displayItems() {
 function onAddItemSubmit(e) {
   e.preventDefault();
 
-  const newItem = itemInput.value;
+  const newItem = itemInput.value.trim();
 
   if (newItem === '') {
     alert('Please add a car part');
     return;
   }
 
-  if (isEditMode) {
-    const itemToEdit = itemList.querySelector('.edit-mode');
-
-    removeItemFromStorage(itemToEdit.textContent);
-    itemToEdit.classList.remove('edit-mode');
-    itemToEdit.remove();
-    isEditMode = false;
+  if (itemBeingEdited) {
+    removeItemFromStorage(itemBeingEdited.textContent);
+    itemBeingEdited.remove();
+    itemBeingEdited = null;
   } else {
     if (checkIfItemExist(newItem)) {
       alert('That item already exist');
@@ -90,11 +87,17 @@ function getItemsFromStorage() {
 }
 
 function onClickItem(e) {
-  if (e.target.parentElement.classList.contains('remove-item')) {
-    removeItem(e.target.parentElement.parentElement);
-  } else {
-    setItemToEdit(e.target);
+  const removeBtn = e.target.closest('.remove-item');
+  if (removeBtn) {
+    const li = removeBtn.closest('li');
+    if (li) removeItem(li);
+    return;
   }
+
+  const li = e.target.closest('li');
+  if (!li || !itemList.contains(li)) return;
+
+  setItemToEdit(li);
 }
 
 function checkIfItemExist(item) {
@@ -103,14 +106,15 @@ function checkIfItemExist(item) {
 }
 
 function setItemToEdit(item) {
-  isEditMode = true;
-
+  if (!item || item.tagName !== 'LI') return;
   itemList.querySelectorAll('li').forEach(i => i.classList.remove('edit-mode'));
 
   item.classList.add('edit-mode');
+  itemBeingEdited = item;
+
   formBtn.innerHTML = '<i class="fa-solid fa-pen"></i>&nbsp;  Update Item';
   formBtn.style.backgroundColor = '#228b22';
-  itemInput.value = item.textContent;
+  itemInput.value = item.firstChild.textContent;
 }
 
 function removeItem(item) {
@@ -161,19 +165,13 @@ function checkUI() {
   itemInput.value = '';
 
   const items = itemList.querySelectorAll('li');
-
-  if (items.length === 0) {
-    clearBtn.style.display = 'none';
-    itemFilter.style.display = 'none';
-  } else {
-    clearBtn.style.display = 'block';
-    itemFilter.style.display = 'block';
-  }
+  clearBtn.style.display = items.length === 0 ? 'none' : 'block';
+  itemFilter.style.display = items.length === 0 ? 'none' : 'block';
 
   formBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Item';
   formBtn.style.backgroundColor = '#333';
 
-  isEditMode = false;
+  itemBeingEdited = null;
 };
 
 function init() {
